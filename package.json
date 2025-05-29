@@ -1,0 +1,17 @@
+{
+  "name": "videocall-signaling-server-v2-no-agora",
+  "version": "2.0.0",
+  "description": "Comprehensive signaling server for video calling app with Firebase FCM and first-responder logic. No Agora token generation.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "firebase-admin": "^12.1.0"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
