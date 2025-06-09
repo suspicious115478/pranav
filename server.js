@@ -7,17 +7,17 @@ const fs = require('fs');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Middleware to parse JSON request bodies
+
 app.use(express.json());
 
-// --- Firebase Admin SDK Initialization ---
+
 let serviceAccount;
 try {
-    // Attempt to load service account key from environment variable (Render)
+   
     if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
         serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
     } else {
-        // Fallback to local file for local development
+       
         const serviceAccountPath = path.resolve(__dirname, 'firebase-service-account.json');
         if (fs.existsSync(serviceAccountPath)) {
             serviceAccount = require(serviceAccountPath);
@@ -33,15 +33,14 @@ try {
     console.log("Firebase Admin SDK initialized successfully.");
 } catch (error) {
     console.error("ERROR: Failed to initialize Firebase Admin SDK:", error.message);
-    process.exit(1); // Exit if Firebase cannot be initialized
+    process.exit(1);
 }
 
-const db = admin.database(); // Get a reference to the Realtime Database
+const db = admin.database(); 
 
-// --- FCM Ringing Notification Sending Endpoint ---
-// This endpoint is called by the Primary App to send a ring to secondary devices.
+
 app.post('/sendRingingNotification', async (req, res) => {
-    // Expected payload: { fcmTokens: [], callerId: "...", callId: "...", type: "ring", channel: "...", token: "..." }
+  
     const { fcmTokens, callerId, callId, type, channel, token } = req.body;
 
     if (!fcmTokens || !Array.isArray(fcmTokens) || fcmTokens.length === 0) {
@@ -53,22 +52,20 @@ app.post('/sendRingingNotification', async (req, res) => {
 
     const message = {
         data: {
-            type: type, // Should be "ring"
+            type: type, 
             callerId: callerId,
             callId: callId,
             channel: channel,
             token: token,
         },
-        tokens: fcmTokens, // Array of FCM registration tokens
-        // --- ADDED PRIORITY FLAGS FOR RELIABLE BACKGROUND DELIVERY ---
-        priority: 'high', // General FCM message priority
+        tokens: fcmTokens, 
+        priority: 'high', 
         android: {
-            priority: 'high' // Android-specific priority
+            priority: 'high'
         },
-        // For pure data messages, content_available helps ensure delivery
-        // and can be useful for background data processing, especially on iOS.
+       
         content_available: true
-        // -----------------------------------------------------------
+       
     };
 
     try {
@@ -79,7 +76,7 @@ app.post('/sendRingingNotification', async (req, res) => {
 
         if (failedSends.length > 0) {
             console.warn('Failed to send ringing to some tokens:', failedSends);
-            // Consider logging specific errors from failedSends[i].error
+            
         }
 
         res.status(200).json({
@@ -94,8 +91,7 @@ app.post('/sendRingingNotification', async (req, res) => {
     }
 });
 
-// --- Call Acceptance Endpoint ---
-// This endpoint is called by a Secondary App when it tries to accept a call.
+
 app.post('/acceptCall', async (req, res) => {
     // Expected payload: { callId: "...", acceptedByDeviceId: "...", currentUid: "...", token: "...", channel: "..." }
     const { callId, acceptedByDeviceId, currentUid, token, channel } = req.body;
@@ -136,7 +132,7 @@ app.post('/acceptCall', async (req, res) => {
             return res.status(409).json({ error: 'Call no longer active or invalid call ID.' });
         }
 
-        // --- Transaction committed successfully ---
+       
         // Send 'ring_ended' notification to all OTHER secondary devices
         const devicesRef = db.ref(`calls/${currentUid}/devices`);
         const devicesSnapshot = await devicesRef.once('value');
