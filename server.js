@@ -60,6 +60,15 @@ app.post('/sendRingingNotification', async (req, res) => {
             token: token,
         },
         tokens: fcmTokens, // Array of FCM registration tokens
+        // --- ADDED PRIORITY FLAGS FOR RELIABLE BACKGROUND DELIVERY ---
+        priority: 'high', // General FCM message priority
+        android: {
+            priority: 'high' // Android-specific priority
+        },
+        // For pure data messages, content_available helps ensure delivery
+        // and can be useful for background data processing, especially on iOS.
+        content_available: true
+        // -----------------------------------------------------------
     };
 
     try {
@@ -70,6 +79,7 @@ app.post('/sendRingingNotification', async (req, res) => {
 
         if (failedSends.length > 0) {
             console.warn('Failed to send ringing to some tokens:', failedSends);
+            // Consider logging specific errors from failedSends[i].error
         }
 
         res.status(200).json({
@@ -149,6 +159,11 @@ app.post('/acceptCall', async (req, res) => {
                         acceptedByDeviceId: acceptedByDeviceId, // Inform which device accepted
                     },
                     tokens: fcmTokensToNotify,
+                    priority: 'high', // Ensure this message also has high priority
+                    android: {
+                        priority: 'high'
+                    },
+                    content_available: true
                 };
                 try {
                     const fcmResponse = await admin.messaging().sendEachForMulticast(ringEndedMessage);
